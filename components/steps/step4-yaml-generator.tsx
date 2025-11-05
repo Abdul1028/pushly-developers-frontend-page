@@ -8,8 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Copy, Check, Download, Sparkles } from "lucide-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { usePipeline } from "@/contexts/pipeline-context";
 
 export default function Step4YamlGenerator() {
+  const { projectId, slackEnabled, slackWebhookUrl } = usePipeline();
   const [branch, setBranch] = useState("main");
   const [environment, setEnvironment] = useState("PRODUCTION");
   const [copied, setCopied] = useState(false);
@@ -19,7 +21,39 @@ export default function Step4YamlGenerator() {
     const githubToken = "${{ secrets.PUSHLY_TOKEN }}";
     const githubSha = "${{ github.sha }}";
     const githubEnv = "${{ env.deployment_id }}";
+    const slackWebhook = "${{ secrets.SLACK_WEBHOOK_URL }}";
+    const githubMessage = "${{ github.event.head_commit.message }}";
+    const githubRef = "${{ github.ref }}";
+    const githubRepo = "${{ github.repository }}";
     
+    const jobStatus = "${{ job.status }}";
+
+    const slackNotificationStep = slackEnabled && slackWebhookUrl ? `
+      - name: Send Slack Notification
+        if: always()
+        run: |
+          DEPLOYMENT_STATUS="${jobStatus}"
+          COMMIT_MSG=$(git log -1 --pretty=%B | head -c 200)
+          COMMIT_SHORT=$(echo "${githubSha}" | cut -c1-7)
+          PROJECT_ID="${githubSecret}"
+          DEPLOYMENT_ID="${githubEnv}"
+          
+          if [ "$DEPLOYMENT_STATUS" = "success" ]; then
+            DEPLOYMENT_URL="https://${projectId || 'YOUR_PROJECT_ID'}.wareality.tech"
+            MESSAGE="Deployment to ${environment} environment for project $PROJECT_ID on branch ${branch} has completed successfully. Deployment ID: $DEPLOYMENT_ID. Commit: $COMMIT_SHORT. Access at: $DEPLOYMENT_URL"
+          else
+            DEPLOYMENT_URL="https://${projectId || 'YOUR_PROJECT_ID'}.wareality.tech"
+            MESSAGE="Deployment to ${environment} environment for project $PROJECT_ID on branch ${branch} has failed. Deployment ID: $DEPLOYMENT_ID. Commit: $COMMIT_SHORT"
+          fi
+          
+          # Escape message for JSON
+          MESSAGE_ESC=$(echo "$MESSAGE" | sed 's/"/\\"/g')
+          
+          curl -X POST "${slackWebhook}" \\
+            -H "Content-Type: application/json" \\
+            -d "{\\"text\\": \\"$MESSAGE_ESC\\"}"` : '';
+
+
     return `name: Pushly Auto Deploy (${environment})
 
 on:
@@ -33,6 +67,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Trigger Deployment Creation
         id: create_deployment
@@ -62,7 +98,7 @@ jobs:
           echo "🚀 Starting deployment to ${environment} environment..."
           curl -s -X POST "https://api.wareality.tech/api/projects/${githubSecret}/deployments/${githubEnv}/deploy?environment=${environment}" \\
             -H "Authorization: Bearer ${githubToken}"
-          echo "✅ Deployment triggered to ${environment}!"
+          echo "✅ Deployment triggered to ${environment}!"${slackNotificationStep}
 
       - name: Done
         run: echo "🎉 Pushly Deployment to ${environment} initiated successfully!"`;
@@ -88,6 +124,8 @@ jobs:
     URL.revokeObjectURL(url);
   };
 
+
+  
   return (
     <Card className="border-gray-800 bg-gray-950">
       <CardHeader>
@@ -199,4 +237,7 @@ jobs:
     </Card>
   );
 }
+
+
+
 

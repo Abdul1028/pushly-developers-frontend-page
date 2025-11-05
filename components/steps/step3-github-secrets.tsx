@@ -4,14 +4,15 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy, Check, ExternalLink, Shield } from "lucide-react";
+import { Copy, Check, ExternalLink, Shield, MessageSquare } from "lucide-react";
 import { usePipeline } from "@/contexts/pipeline-context";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Step3GitHubSecrets() {
-  const { projectId, accessToken } = usePipeline();
+  const { projectId, accessToken, slackWebhookUrl, setSlackWebhookUrl, slackEnabled, setSlackEnabled } = usePipeline();
   const [owner, setOwner] = useState("");
   const [repo, setRepo] = useState("");
-  const [copied, setCopied] = useState({ projectIdKey: false, projectIdValue: false, tokenKey: false, tokenValue: false });
+  const [copied, setCopied] = useState({ projectIdKey: false, projectIdValue: false, tokenKey: false, tokenValue: false, slackKey: false, slackValue: false });
 
   const secretsUrl = owner && repo 
     ? `https://github.com/${owner}/${repo}/settings/secrets/actions`
@@ -51,11 +52,70 @@ export default function Step3GitHubSecrets() {
             Required Secrets
           </h4>
           
-          {(!projectId || !accessToken) && (
+            {(!projectId || !accessToken) && (
             <div className="rounded-lg border border-amber-900/50 bg-amber-950/30 p-4">
               <p className="text-xs text-amber-300">
                 <strong className="text-amber-200">⚠️ Complete previous steps:</strong> Please complete Steps 1 and 2 to see the secret values here.
               </p>
+            </div>
+          )}
+
+          {slackEnabled && slackWebhookUrl && (
+            <div className="rounded-lg border border-purple-900/50 bg-purple-950/30 p-3 mb-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Key</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="rounded bg-gray-800 px-3 py-2 text-sm font-mono text-purple-400">
+                      SLACK_WEBHOOK_URL
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText("SLACK_WEBHOOK_URL");
+                        setCopied({ ...copied, slackKey: true });
+                        setTimeout(() => setCopied({ ...copied, slackKey: false }), 2000);
+                      }}
+                      className="h-8 w-8 p-0"
+                    >
+                      {copied.slackKey ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Value</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 rounded bg-gray-800 px-3 py-2 text-sm font-mono text-purple-400 break-all">
+                      {slackWebhookUrl}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(slackWebhookUrl);
+                        setCopied({ ...copied, slackValue: true });
+                        setTimeout(() => setCopied({ ...copied, slackValue: false }), 2000);
+                      }}
+                      className="h-8 w-8 p-0"
+                    >
+                      {copied.slackValue ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -231,6 +291,62 @@ export default function Step3GitHubSecrets() {
               <strong className="text-blue-200">💡 Tip:</strong> Copy the Key name and Value separately. In GitHub Secrets, use the Key as the secret name and paste the Value as the secret value. Both must be added exactly as shown above.
             </p>
           </div>
+        </div>
+
+        {/* Slack Integration */}
+        <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900 p-4">
+          <div className="flex items-center gap-3">
+            <Checkbox
+              id="slack-enabled"
+              checked={slackEnabled}
+              onChange={(e) => setSlackEnabled(e.target.checked)}
+            />
+            <label htmlFor="slack-enabled" className="text-sm font-medium text-gray-300 flex items-center gap-2 cursor-pointer">
+              <MessageSquare className="h-4 w-4" />
+              Enable Slack Notifications
+            </label>
+          </div>
+
+          {slackEnabled && (
+            <div className="space-y-3 pl-7">
+              <div className="space-y-2">
+                <label htmlFor="slack-webhook" className="text-sm font-medium text-gray-300">
+                  Slack Webhook URL
+                </label>
+                <Input
+                  id="slack-webhook"
+                  type="url"
+                  placeholder="https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXX"
+                  value={slackWebhookUrl}
+                  onChange={(e) => setSlackWebhookUrl(e.target.value)}
+                />
+                <p className="text-xs text-gray-500">
+                  Get your webhook URL from{" "}
+                  <a
+                    href="https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/#create-app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 underline"
+                  >
+                    Slack's incoming webhook guide
+                  </a>
+                </p>
+              </div>
+
+              {slackWebhookUrl && (
+                <div className="rounded-lg border border-green-900/50 bg-green-950/30 p-3">
+                  <p className="text-xs text-green-300">
+                    <strong className="text-green-200">✓ Slack webhook configured:</strong> You'll receive deployment notifications in Slack.
+                    {slackWebhookUrl && (
+                      <>
+                        {" "}Add <code className="text-green-400">SLACK_WEBHOOK_URL</code> to your GitHub Secrets with this value.
+                      </>
+                    )}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

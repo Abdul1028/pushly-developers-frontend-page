@@ -7,6 +7,10 @@ interface PipelineContextType {
   setProjectId: (id: string) => void;
   accessToken: string;
   setAccessToken: (token: string) => void;
+  slackWebhookUrl: string;
+  setSlackWebhookUrl: (url: string) => void;
+  slackEnabled: boolean;
+  setSlackEnabled: (enabled: boolean) => void;
 }
 
 const PipelineContext = createContext<PipelineContextType | undefined>(undefined);
@@ -14,6 +18,8 @@ const PipelineContext = createContext<PipelineContextType | undefined>(undefined
 export function PipelineProvider({ children }: { children: ReactNode }) {
   const [projectId, setProjectId] = useState("");
   const [accessToken, setAccessToken] = useState("");
+  const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
+  const [slackEnabled, setSlackEnabled] = useState(false);
 
   return (
     <PipelineContext.Provider
@@ -22,6 +28,10 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
         setProjectId,
         accessToken,
         setAccessToken,
+        slackWebhookUrl,
+        setSlackWebhookUrl,
+        slackEnabled,
+        setSlackEnabled,
       }}
     >
       {children}
