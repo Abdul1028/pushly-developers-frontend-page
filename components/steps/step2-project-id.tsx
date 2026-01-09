@@ -141,7 +141,6 @@ export default function Step2ProjectId() {
               <code>{projectId}</code>
               <span className="text-gray-400"> → </span>
               <code>{projectSubdomain}.wareality.tech</code>
-
             </span>
             <Button
               variant="ghost"

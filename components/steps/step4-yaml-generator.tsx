@@ -285,26 +285,27 @@ export default function Step4YamlGenerator() {
         : `https://${DEPLOYMENT_ID}--${projectSubdomain}.wareality.tech`;
 
     const slackStep =
-      slackEnabled && slackWebhookUrl
+      slackEnabled
         ? `
-      - name: Send Slack Notification
-        if: always()
-        run: |
-          COMMIT_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
-
-          if [ "${JOB_STATUS}" = "success" ]; then
-            MESSAGE="✅ Deployment successful for ${projectSubdomain} (${environment}) | Commit: $COMMIT_SHORT | URL: ${deploymentUrl}"
-          else
-            MESSAGE="❌ Deployment failed for ${projectSubdomain} (${environment}) | Commit: $COMMIT_SHORT"
-          fi
-
-          MESSAGE_ESC=$(echo "$MESSAGE" | sed 's/"/\\"/g')
-
-          curl -X POST "${slackWebhookUrl}" \\
-            -H "Content-Type: application/json" \\
-            -d "{\\"text\\": \\"$MESSAGE_ESC\\"}"
-`
+            - name: Send Slack Notification
+              if: always()
+              run: |
+                COMMIT_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
+      
+                if [ "${JOB_STATUS}" = "success" ]; then
+                  MESSAGE="✅ Deployment successful for ${projectSubdomain} (${environment}) | Commit: $COMMIT_SHORT | URL: ${deploymentUrl}"
+                else
+                  MESSAGE="❌ Deployment failed for ${projectSubdomain} (${environment}) | Commit: $COMMIT_SHORT"
+                fi
+      
+                MESSAGE_ESC=$(echo "$MESSAGE" | sed 's/"/\\"/g')
+      
+                curl -X POST "\${{ secrets.SLACK_WEBHOOK_URL }}" \\
+                  -H "Content-Type: application/json" \\
+                  -d "{\\"text\\": \\"$MESSAGE_ESC\\"}"
+      `
         : "";
+
 
     return `name: Pushly Auto Deploy (${environment})
 
