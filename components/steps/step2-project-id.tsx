@@ -14,7 +14,7 @@ import { Copy, Loader2 } from "lucide-react";
 import { usePipeline } from "@/contexts/pipeline-context";
 
 export default function Step2ProjectId() {
-  const { accessToken, projectId, setProjectId } = usePipeline();
+  const { accessToken, projectId, setProjectId, projectSubdomain, setProjectSubdomain } = usePipeline();
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -64,6 +64,8 @@ export default function Step2ProjectId() {
 
       const data = await res.json();
       setProjectId(data.projectId);
+      setProjectSubdomain(data.subdomain);
+
     } catch (e: any) {
       setError(e.message || "Failed to resolve project");
     } finally {
@@ -135,7 +137,11 @@ export default function Step2ProjectId() {
         {projectId && !error && (
           <div className="flex items-center justify-between rounded border border-green-800 bg-green-950 p-3">
             <span className="text-xs text-green-300">
-              ✓ Project ID resolved: <code>{projectId}</code>
+              ✓ Project resolved:
+              <code>{projectId}</code>
+              <span className="text-gray-400"> → </span>
+              <code>{projectSubdomain}.wareality.tech</code>
+
             </span>
             <Button
               variant="ghost"

@@ -5,6 +5,8 @@ import { createContext, useContext, useState, ReactNode } from "react";
 interface PipelineContextType {
   projectId: string;
   setProjectId: (id: string) => void;
+  projectSubdomain: string;
+  setProjectSubdomain: (subdomain: string) => void;
   accessToken: string;
   setAccessToken: (token: string) => void;
   slackWebhookUrl: string;
@@ -17,6 +19,7 @@ const PipelineContext = createContext<PipelineContextType | undefined>(undefined
 
 export function PipelineProvider({ children }: { children: ReactNode }) {
   const [projectId, setProjectId] = useState("");
+  const [projectSubdomain, setProjectSubdomain] = useState("");
   const [accessToken, setAccessToken] = useState("");
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [slackEnabled, setSlackEnabled] = useState(false);
@@ -26,6 +29,8 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
       value={{
         projectId,
         setProjectId,
+        projectSubdomain,
+        setProjectSubdomain,
         accessToken,
         setAccessToken,
         slackWebhookUrl,
