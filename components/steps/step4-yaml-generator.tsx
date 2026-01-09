@@ -244,11 +244,16 @@
 //   );
 // }
 
-
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -264,7 +269,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { usePipeline } from "@/contexts/pipeline-context";
 
 export default function Step4YamlGenerator() {
-  const { projectSubdomain, slackEnabled, slackWebhookUrl } = usePipeline();
+  const { projectSubdomain, slackEnabled } = usePipeline();
 
   const [branch, setBranch] = useState("main");
   const [environment, setEnvironment] =
@@ -278,34 +283,33 @@ export default function Step4YamlGenerator() {
     const DEPLOYMENT_ID = "${{ env.deployment_id }}";
     const JOB_STATUS = "${{ job.status }}";
 
-    // ✅ URL decided at generation time (NO runtime if/else)
+    // URL resolved at generation time
     const deploymentUrl =
       environment === "PRODUCTION"
         ? `https://${projectSubdomain}.wareality.tech`
         : `https://${DEPLOYMENT_ID}--${projectSubdomain}.wareality.tech`;
 
-    const slackStep =
-      slackEnabled
-        ? `
-            - name: Send Slack Notification
-              if: always()
-              run: |
-                COMMIT_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
-      
-                if [ "${JOB_STATUS}" = "success" ]; then
-                  MESSAGE="✅ Deployment successful for ${projectSubdomain} (${environment}) | Commit: $COMMIT_SHORT | URL: ${deploymentUrl}"
-                else
-                  MESSAGE="❌ Deployment failed for ${projectSubdomain} (${environment}) | Commit: $COMMIT_SHORT"
-                fi
-      
-                MESSAGE_ESC=$(echo "$MESSAGE" | sed 's/"/\\"/g')
-      
-                curl -X POST "\${{ secrets.SLACK_WEBHOOK_URL }}" \\
-                  -H "Content-Type: application/json" \\
-                  -d "{\\"text\\": \\"$MESSAGE_ESC\\"}"
-      `
-        : "";
+    // ✅ CORRECTLY INDENTED STEP
+    const slackStep = slackEnabled
+      ? `
+      - name: Send Slack Notification
+        if: always()
+        run: |
+          COMMIT_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
 
+          if [ "${JOB_STATUS}" = "success" ]; then
+            MESSAGE="✅ Deployment successful for ${projectSubdomain} (${environment}) | Commit: $COMMIT_SHORT | URL: ${deploymentUrl}"
+          else
+            MESSAGE="❌ Deployment failed for ${projectSubdomain} (${environment}) | Commit: $COMMIT_SHORT"
+          fi
+
+          MESSAGE_ESC=$(echo "$MESSAGE" | sed 's/"/\\"/g')
+
+          curl -X POST "\${{ secrets.SLACK_WEBHOOK_URL }}" \\
+            -H "Content-Type: application/json" \\
+            -d "{\\"text\\": \\"$MESSAGE_ESC\\"}"
+`
+      : "";
 
     return `name: Pushly Auto Deploy (${environment})
 
@@ -346,7 +350,6 @@ jobs:
           curl -s -X POST "https://api.wareality.tech/api/projects/${PROJECT_ID_SECRET}/deployments/${DEPLOYMENT_ID}/deploy?environment=${environment}" \\
             -H "Authorization: Bearer ${PUSHLY_TOKEN}"
 ${slackStep}
-
       - name: Done
         run: echo "🎉 Deployment triggered successfully"
 `;
@@ -367,14 +370,13 @@ ${slackStep}
               Generate GitHub Actions YAML
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Environment-specific workflow (no runtime conditionals)
+              Environment-specific workflow (syntax-safe)
             </CardDescription>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Controls */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="text-sm text-gray-300">Branch</label>
@@ -395,9 +397,10 @@ ${slackStep}
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex justify-between items-center">
-          <h4 className="text-sm font-semibold text-gray-300">Generated Workflow</h4>
+          <h4 className="text-sm font-semibold text-gray-300">
+            Generated Workflow
+          </h4>
 
           <div className="flex gap-2">
             <Button
@@ -409,8 +412,17 @@ ${slackStep}
                 setTimeout(() => setCopied(false), 2000);
               }}
             >
-              {copied ? <Check className="mr-2 h-4 w-4 text-green-500" /> : <Copy className="mr-2 h-4 w-4" />}
-              {copied ? "Copied" : "Copy YAML"}
+              {copied ? (
+                <>
+                  <Check className="mr-2 h-4 w-4 text-green-500" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy YAML
+                </>
+              )}
             </Button>
 
             <Button
@@ -432,7 +444,6 @@ ${slackStep}
           </div>
         </div>
 
-        {/* Preview */}
         <div className="border border-gray-800 rounded-lg overflow-hidden">
           <SyntaxHighlighter language="yaml" style={vscDarkPlus}>
             {yaml}
