@@ -72,7 +72,7 @@ export default function Step2AccessToken() {
             2
           </div>
           <div>
-            <CardTitle className="text-xl">Generate Access Token</CardTitle>
+            <CardTitle className="text-xl">Login & Generate Access Token</CardTitle>
             <CardDescription className="text-gray-400">
               Create an access token via the authentication API
             </CardDescription>

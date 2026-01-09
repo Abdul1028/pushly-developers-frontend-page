@@ -39,10 +39,10 @@ export default function Step4YamlGenerator() {
           DEPLOYMENT_ID="${githubEnv}"
           
           if [ "$DEPLOYMENT_STATUS" = "success" ]; then
-            DEPLOYMENT_URL="https://${projectId || 'YOUR_PROJECT_ID'}.wareality.tech"
+            DEPLOYMENT_URL="https://$PROJECT_ID.wareality.tech"
             MESSAGE="Deployment to ${environment} environment for project $PROJECT_ID on branch ${branch} has completed successfully. Deployment ID: $DEPLOYMENT_ID. Commit: $COMMIT_SHORT. Access at: $DEPLOYMENT_URL"
           else
-            DEPLOYMENT_URL="https://${projectId || 'YOUR_PROJECT_ID'}.wareality.tech"
+            DEPLOYMENT_URL="https://$PROJECT_ID.wareality.tech"
             MESSAGE="Deployment to ${environment} environment for project $PROJECT_ID on branch ${branch} has failed. Deployment ID: $DEPLOYMENT_ID. Commit: $COMMIT_SHORT"
           fi
           

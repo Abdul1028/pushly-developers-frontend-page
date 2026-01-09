@@ -1,5 +1,5 @@
-import Step1ProjectId from "@/components/steps/step1-project-id";
-import Step2AccessToken from "@/components/steps/step2-access-token";
+import Step1AccessToken from "@/components/steps/step1-access-token";
+import Step2ProjectId from "@/components/steps/step2-project-id";
 import Step3GitHubSecrets from "@/components/steps/step3-github-secrets";
 import Step4YamlGenerator from "@/components/steps/step4-yaml-generator";
 import { PipelineProvider } from "@/contexts/pipeline-context";
@@ -22,8 +22,8 @@ export default function Home() {
 
           {/* Steps */}
           <div className="space-y-8">
-            <Step1ProjectId />
-            <Step2AccessToken />
+            <Step1AccessToken/>
+            <Step2ProjectId />
             <Step3GitHubSecrets />
             <Step4YamlGenerator />
           </div>
